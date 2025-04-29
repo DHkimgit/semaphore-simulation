@@ -1,4 +1,4 @@
-import { Process, ProcessType, Message } from './types';
+import { Process, ProcessType, Message, ProcessStatus } from './types'; // Import ProcessStatus
 import { v4 as uuidv4 } from 'uuid';
 
 export class ProcessModel {
@@ -6,7 +6,7 @@ export class ProcessModel {
   private type: ProcessType;
   private name: string;
   private message?: string;
-  private status: 'waiting' | 'running' | 'blocked';
+  private status: ProcessStatus; // Use ProcessStatus type
   private currentStep: number;
   private steps: string[];
 
@@ -58,11 +58,11 @@ export class ProcessModel {
     return this.message;
   }
 
-  public getStatus(): 'waiting' | 'running' | 'blocked' {
+  public getStatus(): ProcessStatus { // Use ProcessStatus type
     return this.status;
   }
 
-  public setStatus(status: 'waiting' | 'running' | 'blocked'): void {
+  public setStatus(status: ProcessStatus): void { // Use ProcessStatus type
     this.status = status;
   }
 
@@ -72,6 +72,17 @@ export class ProcessModel {
 
   public getCurrentStepDescription(): string {
     return this.steps[this.currentStep];
+  }
+
+  // Add this new method
+  public setNextStep(stepIndex: number): void {
+    if (stepIndex >= 0 && stepIndex < this.steps.length) {
+      this.currentStep = stepIndex;
+    } else {
+      console.warn(`Invalid step index: ${stepIndex} for process ${this.id}`);
+      // Optionally handle the error, e.g., reset to 0 or throw an error
+      // For now, we'll just keep the current step
+    }
   }
 
   public getSteps(): string[] {

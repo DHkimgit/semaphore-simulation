@@ -87,13 +87,6 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({
       ) : (
         <>
           <ButtonGroup>
-            <Button 
-              variant="secondary" 
-              onClick={onPrevious}
-              disabled={!canGoPrevious}
-            >
-              이전 상황
-            </Button>
             <Button variant="primary" onClick={onNext}>
               다음 상황
             </Button>

@@ -1,4 +1,4 @@
-import { SimulationState, Process, Message, ConsumerLog } from './types';
+import { SimulationState, Process, Message, ConsumerLog, ProcessStatus } from './types';
 import { Semaphore } from './Semaphore';
 import { CircularBuffer } from './CircularBuffer';
 import { ProcessModel } from './ProcessModel';
@@ -18,6 +18,7 @@ export class SimulationModel {
   private bufferSize: number;
   private processesCompleted: Set<string>; // 코드를 한 번 실행한 프로세스 추적
   private blockedProcesses: Map<string, { semaphore: string, nextStepIndex: number }>; // 블록된 프로세스 정보
+  private readyQueue: ProcessModel[]; // 깨어난 프로세스를 위한 준비 큐
 
   constructor(bufferSize: number = 4) {
     this.bufferSize = bufferSize;
@@ -34,6 +35,7 @@ export class SimulationModel {
     this.isRunning = false;
     this.processesCompleted = new Set<string>();
     this.blockedProcesses = new Map();
+    this.readyQueue = []; // 준비 큐 초기화
     
     // 초기 상태 저장
     this.saveState();
@@ -101,10 +103,27 @@ export class SimulationModel {
       return null;
     }
 
+    let processCompletedCycle = false;
+    let processBlocked = false;
+
+    // Check if there's a valid current process
+    if (this.currentProcessIndex < 0 || this.currentProcessIndex >= this.processes.length) {
+        // No active process, try to find one
+        this.moveToNextProcess();
+        // If still no active process, return
+        if (!this.isRunning || this.currentProcessIndex < 0 || this.currentProcessIndex >= this.processes.length) {
+            this.saveState(); // Save state even if nothing happened
+            return this.getCurrentState();
+        }
+    }
+
     const currentProcess = this.processes[this.currentProcessIndex];
     const currentStepDescription = currentProcess.getCurrentStepDescription();
     let isBlocked = false;
-    
+
+    // Set status to running before executing the step
+    currentProcess.setStatus('running');
+
     // 현재 프로세스의 현재 단계 실행
     if (currentProcess.getType() === 'producer') {
       isBlocked = this.executeProducerStep(currentProcess, currentStepDescription);
@@ -112,33 +131,49 @@ export class SimulationModel {
       isBlocked = this.executeConsumerStep(currentProcess, currentStepDescription);
     }
 
-    // 프로세스가 블록된 경우 다음 프로세스로 즉시 전환
+    // 프로세스가 블록된 경우
     if (isBlocked) {
       // 현재 프로세스 상태를 'blocked'로 설정
       currentProcess.setStatus('blocked');
-      
-      // 다음 프로세스로 전환
-      this.moveToNextProcess();
+      processBlocked = true;
     } else {
       // 프로세스가 블록되지 않은 경우 다음 단계로 이동
-      if (currentProcess.nextStep()) {
-        // 현재 프로세스의 다음 단계로 이동
+      if (!currentProcess.nextStep()) {
+        // 현재 프로세스의 모든 단계가 완료됨
+        // currentProcess.resetSteps(); // 더 이상 필요 없음
+        currentProcess.setStatus('finished'); // 상태를 'finished'로 설정
+        processCompletedCycle = true;
       } else {
-        // 현재 프로세스의 모든 단계가 완료되면 다음 프로세스로 이동
-        currentProcess.resetSteps();
-        currentProcess.setStatus('waiting');
-        
-        // 프로세스가 한 번 실행 완료됨을 기록
-        this.processesCompleted.add(currentProcess.getId());
-        
-        // 다음 프로세스로 이동
-        this.moveToNextProcess();
-        
-        // 모든 프로세스가 한 번씩 실행되었는지 확인
-        if (this.processesCompleted.size === this.processes.length) {
-          this.isRunning = false; // 시뮬레이션 종료
-        }
+         // Successfully moved to the next step, keep status as 'running' for now
+         // It will be set to 'waiting' in moveToNextProcess if we switch
       }
+    }
+
+    // 현재 프로세스가 블록되었거나 사이클을 완료한 경우에만 다음 프로세스로 전환
+    if (processBlocked || processCompletedCycle) {
+        // Set current process to waiting *before* moving to the next,
+        // unless it was blocked (already set)
+        // Status is already set correctly above (blocked or waiting)
+        this.moveToNextProcess();
+    } else {
+        // If the process was not blocked and did not complete its cycle,
+        // it remains the current running process for the next step.
+        // Its status should remain 'running' (set at the start).
+    }
+
+    // 모든 프로세스가 블록되었거나 대기 중이거나 완료되었고 준비 큐가 비어 있는지 확인하여 시뮬레이션 종료
+    const allEffectivelyInactive = this.processes.every(p =>
+        p.getStatus() === 'finished' || // 완료된 프로세스 포함
+        this.blockedProcesses.has(p.getId()) ||
+        this.mutexP.hasProcess(p.getId()) ||
+        this.mutexC.hasProcess(p.getId()) ||
+        this.nrfull.hasProcess(p.getId()) ||
+        this.nrempty.hasProcess(p.getId()) ||
+        p.getStatus() === 'waiting' // Also consider waiting processes if none are ready
+    );
+
+    if (allEffectivelyInactive && this.readyQueue.length === 0 && this.processes.length > 0) {
+        this.isRunning = false; // 모든 프로세스가 비활성 상태이고 준비 큐가 비면 시뮬레이션 중지
     }
 
     this.step++;
@@ -148,11 +183,27 @@ export class SimulationModel {
 
   private moveToNextProcess(): void {
     // 현재 프로세스가 running 상태면 waiting으로 변경
-    if (this.processes[this.currentProcessIndex].getStatus() === 'running') {
+    if (this.processes.length > 0 && this.currentProcessIndex >= 0 && this.currentProcessIndex < this.processes.length && this.processes[this.currentProcessIndex].getStatus() === 'running') {
       this.processes[this.currentProcessIndex].setStatus('waiting');
     }
+
+    // 준비 큐 확인
+    if (this.readyQueue.length > 0) {
+      const nextProcess = this.readyQueue.shift()!;
+      const processIndex = this.processes.findIndex(p => p.getId() === nextProcess.getId());
+      if (processIndex !== -1) {
+        this.currentProcessIndex = processIndex;
+        this.processes[this.currentProcessIndex].setStatus('running');
+        return;
+      }
+    }
     
-    // 다음 프로세스 인덱스 계산
+    // 다음 프로세스 인덱스 계산 (기존 라운드 로빈 로직)
+    if (this.processes.length === 0) {
+      this.isRunning = false;
+      return;
+    }
+    
     let nextIndex = (this.currentProcessIndex + 1) % this.processes.length;
     let attempts = 0;
     
@@ -161,8 +212,9 @@ export class SimulationModel {
       const nextProcess = this.processes[nextIndex];
       const nextProcessId = nextProcess.getId();
       
-      // 블록되지 않은 프로세스를 찾으면 선택
-      if (!this.blockedProcesses.has(nextProcessId) && 
+      // 블록되지 않았고 완료되지 않은 프로세스를 찾으면 선택
+      if (nextProcess.getStatus() !== 'finished' && // 완료된 프로세스 건너뛰기
+          !this.blockedProcesses.has(nextProcessId) && 
           !this.mutexP.hasProcess(nextProcessId) && 
           !this.mutexC.hasProcess(nextProcessId) && 
           !this.nrfull.hasProcess(nextProcessId) && 
@@ -176,8 +228,20 @@ export class SimulationModel {
       attempts++;
     }
     
-    // 모든 프로세스가 블록된 경우 (이론적으로는 발생하지 않아야 함)
-    this.isRunning = false;
+    // 모든 프로세스가 블록된 경우 또는 실행 가능한 프로세스가 없는 경우
+    // isRunning 상태는 nextStep에서 관리되므로 여기서는 변경하지 않음
+    const allInactive = this.processes.every(p => 
+        p.getStatus() === 'finished' || // 완료된 프로세스 포함
+        this.blockedProcesses.has(p.getId()) || 
+        this.mutexP.hasProcess(p.getId()) || 
+        this.mutexC.hasProcess(p.getId()) || 
+        this.nrfull.hasProcess(p.getId()) || 
+        this.nrempty.hasProcess(p.getId())
+    );
+
+    if (allInactive && this.processes.length > 0) {
+        this.isRunning = false; // 모든 프로세스가 블록되거나 완료되면 시뮬레이션 중지
+    }
   }
 
   public previousStep(): SimulationState | null {
@@ -208,11 +272,12 @@ export class SimulationModel {
     this.isRunning = false;
     this.processesCompleted.clear();
     this.blockedProcesses.clear();
+    this.readyQueue = []; // 준비 큐 초기화
     
     // 모든 프로세스 초기화
     for (const process of this.processes) {
-      process.resetSteps();
-      process.setStatus('waiting');
+      process.resetSteps(); // resetSteps는 유지하여 단계 초기화
+      process.setStatus('waiting'); // 모든 프로세스를 waiting으로 초기화
     }
     
     // 초기 상태 저장
@@ -265,8 +330,16 @@ export class SimulationModel {
     
     const process = this.processes[processIndex];
     
-    // 프로세스 상태 업데이트
-    process.setStatus('waiting'); // running이 아닌 waiting으로 설정하여 다음 차례에 실행되도록 함
+    // 프로세스 상태 업데이트 (waiting으로 설정)
+    process.setStatus('waiting'); 
+    
+    // 깨어난 프로세스의 다음 실행 단계를 설정 (P() 연산 다음 단계)
+    process.setNextStep(blockInfo.nextStepIndex);
+
+    // 준비 큐에 추가
+    if (!this.readyQueue.some(p => p.getId() === processId)) {
+        this.readyQueue.push(process);
+    }
   }
 
   private executeProducerStep(process: ProcessModel, stepDescription: string): boolean {
@@ -283,7 +356,7 @@ export class SimulationModel {
           // 프로세스가 블록됨
           this.blockedProcesses.set(processId, { 
             semaphore: 'mutexP', 
-            nextStepIndex: process.getCurrentStep() + 1 
+            nextStepIndex: process.getCurrentStep() + 1 // 다음 단계 인덱스 저장
           });
           return true;
         }
@@ -295,7 +368,7 @@ export class SimulationModel {
           // 프로세스가 블록됨
           this.blockedProcesses.set(processId, { 
             semaphore: 'nrempty', 
-            nextStepIndex: process.getCurrentStep() + 1 
+            nextStepIndex: process.getCurrentStep() + 1 // 다음 단계 인덱스 저장
           });
           return true;
         }
@@ -340,7 +413,7 @@ export class SimulationModel {
           // 프로세스가 블록됨
           this.blockedProcesses.set(processId, { 
             semaphore: 'mutexC', 
-            nextStepIndex: process.getCurrentStep() + 1 
+            nextStepIndex: process.getCurrentStep() + 1 // 다음 단계 인덱스 저장
           });
           return true;
         }
@@ -352,7 +425,7 @@ export class SimulationModel {
           // 프로세스가 블록됨
           this.blockedProcesses.set(processId, { 
             semaphore: 'nrfull', 
-            nextStepIndex: process.getCurrentStep() + 1 
+            nextStepIndex: process.getCurrentStep() + 1 // 다음 단계 인덱스 저장
           });
           return true;
         }
@@ -429,19 +502,27 @@ export class SimulationModel {
     for (let i = 0; i < this.processes.length; i++) {
       const processState = state.processes.find(p => p.id === this.processes[i].getId());
       if (processState) {
-        this.processes[i].setStatus(processState.status);
+        this.processes[i].setStatus(processState.status as ProcessStatus); // 타입 단언 추가
         
         // 블록된 프로세스 정보 복원
         if (processState.status === 'blocked' && processState.waitReason) {
           this.blockedProcesses.set(processState.id, {
             semaphore: processState.waitReason,
-            nextStepIndex: processState.currentStep + 1
+            // nextStepIndex: processState.currentStep + 1 // 이전 로직
+            nextStepIndex: processState.currentStep // 복원 시에는 저장된 currentStep을 사용해야 함 (P() 다음 단계가 아님)
           });
         }
         
         // 현재 단계 복원
-        while (this.processes[i].getCurrentStep() !== processState.currentStep) {
-          this.processes[i].nextStep();
+        // restoreState에서는 ProcessModel의 currentStep을 직접 설정하지 않고,
+        // processState.currentStep 값과 일치할 때까지 nextStep()을 호출하는 방식이므로
+        // setNextStep을 사용할 필요가 없습니다. 기존 로직 유지.
+        // 단, finished 상태일 경우 step을 진행시키지 않도록 처리
+        if (this.processes[i].getStatus() !== 'finished') {
+            while (this.processes[i].getCurrentStep() !== processState.currentStep) {
+              // nextStep()은 마지막 단계 이후 false를 반환하므로 무한 루프 방지
+              if (!this.processes[i].nextStep()) break; 
+            }
         }
       }
     }
@@ -456,7 +537,7 @@ export class SimulationModel {
   public initializeExample(): void {
     this.removeAllProcesses();
     
-    // 생산자 – 소비자 – 소비자 – 소비자 - 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 소비자 – 생산자 – 생산자 – 생산자 – 소비자 – 소비자 – 소비자 – 소비자 – 소비자 – 소비자 – 소비자 - 소비자
+    // 생산자 – 소비자 – 소비자 – 소비자 - 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 생산자 – 소비자 – 생산자 – 생산자 – 생산자 – 생산자 – 소비자 – 소비자 – 소비자 – 소비자 – 소비자 – 소비자 - 소비자
     const processTypes = [
       'producer', 'consumer', 'consumer', 'consumer', 'producer', 
       'producer', 'producer', 'producer', 'producer', 'producer', 

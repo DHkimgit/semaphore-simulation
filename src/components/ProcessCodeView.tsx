@@ -48,7 +48,7 @@ const ProcessHeader = styled.div<{ type: 'producer' | 'consumer' }>`
   }
 `;
 
-const StatusBadge = styled.span<{ status: 'waiting' | 'running' | 'blocked' }>`
+const StatusBadge = styled.span<{ status: 'waiting' | 'running' | 'blocked' | 'finished' }>`
   margin-left: auto;
   font-size: 0.8rem;
   padding: 2px 6px;
@@ -57,6 +57,7 @@ const StatusBadge = styled.span<{ status: 'waiting' | 'running' | 'blocked' }>`
     switch (props.status) {
       case 'running': return 'rgba(40, 167, 69, 0.1)';
       case 'blocked': return 'rgba(220, 53, 69, 0.1)';
+      case 'finished': return 'rgba(108, 117, 125, 0.1)'; // 종료됨 상태 배경색 추가
       default: return 'rgba(108, 117, 125, 0.1)';
     }
   }};
@@ -64,6 +65,7 @@ const StatusBadge = styled.span<{ status: 'waiting' | 'running' | 'blocked' }>`
     switch (props.status) {
       case 'running': return '#28a745';
       case 'blocked': return '#dc3545';
+      case 'finished': return '#6c757d'; // 종료됨 상태 글자색 추가
       default: return '#6c757d';
     }
   }};
@@ -159,7 +161,9 @@ const ProcessCodeView: React.FC<ProcessCodeViewProps> = ({
                     ? `대기 중 (${process.waitReason})` 
                     : process.status === 'running' 
                       ? '실행 중' 
-                      : '대기 중'}
+                      : process.status === 'finished'
+                        ? '종료됨' // 종료됨 텍스트 추가
+                        : '대기 중'}
                 </StatusBadge>
               </ProcessHeader>
               
