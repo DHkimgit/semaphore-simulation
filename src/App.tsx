@@ -24,7 +24,6 @@ import LogModal from './components/LogModal';
 import styled from 'styled-components';
 import { ProcessModel, SimulationModel, SimulationState } from './models';
 
-// 로그 보기 버튼 스타일 추가
 const LogButton = styled.button`
   position: absolute;
   top: 20px; // bottom -> top 으로 변경
@@ -49,7 +48,7 @@ const App: React.FC = () => {
   const [simulationState, setSimulationState] = useState<SimulationState>(simulationModel.getCurrentState());
   const [producerCount, setProducerCount] = useState<number>(0);
   const [consumerCount, setConsumerCount] = useState<number>(0);
-  const [isLogModalOpen, setIsLogModalOpen] = useState<boolean>(false); // 모달 상태 추가
+  const [isLogModalOpen, setIsLogModalOpen] = useState<boolean>(false);
 
   const handleAddProcess = (type: 'producer' | 'consumer', name: string, message?: string) => {
     const process = new ProcessModel(type, name, message);
@@ -100,19 +99,11 @@ const App: React.FC = () => {
     }
   };
 
-  const handlePreviousStep = () => {
-    const newState = simulationModel.previousStep();
-    if (newState) {
-      setSimulationState(newState);
-    }
-  };
-
   const handleResetSimulation = () => {
     simulationModel.reset();
     setSimulationState(simulationModel.getCurrentState());
   };
 
-  // 모달 토글 함수 추가
   const toggleLogModal = () => {
     setIsLogModalOpen(!isLogModalOpen);
   };
@@ -143,17 +134,15 @@ const App: React.FC = () => {
             <SimulationControls 
               isRunning={simulationState.isRunning} 
               onStart={handleStartSimulation} 
-              onPrevious={handlePreviousStep} 
               onNext={handleNextStep} 
               onReset={handleResetSimulation} 
-              canGoPrevious={simulationState.step > 0} 
             />
           </SidebarFooter>
         </Sidebar>
         
         <MainContent>
           <SimulationArea>
-            <SectionTitle>시뮬레이션 시각화</SectionTitle>
+            <SectionTitle>원형 다중 버퍼를 사용한 생산자-소비자 문제 시뮬레이션</SectionTitle>
             
             <SimulationContent>
               <LeftPanel>
@@ -191,22 +180,10 @@ const App: React.FC = () => {
               nremptyQueue={simulationState.nremptyQueue}
             />
           </SimulationArea>
-          
-          {/* LogArea 제거 */}
-          {/* 
-          <LogArea>
-            <SectionTitle>소비자 로그</SectionTitle>
-            <ConsumerLogTable logs={simulationState.consumerLogs} />
-          </LogArea>
-          */}
-
-          {/* 로그 보기 버튼 추가 */}
           <LogButton onClick={toggleLogModal}>로그 보기</LogButton>
-
         </MainContent>
       </AppContainer>
 
-      {/* LogModal 렌더링 */}
       <LogModal 
         isOpen={isLogModalOpen} 
         onClose={toggleLogModal} 

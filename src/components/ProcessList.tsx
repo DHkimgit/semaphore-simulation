@@ -7,10 +7,12 @@ import ProcessItem from './ProcessItem';
 import { Process } from '../models';
 
 const ProcessListContainer = styled.div`
-  margin-bottom: 20px;
-  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  height: 370px;
   background-color: #f9f9f9;
   border-radius: 8px;
+  padding: 15px;
 `;
 
 const ListHeader = styled.div`
@@ -32,10 +34,10 @@ const ButtonsContainer = styled.div`
 `;
 
 const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'danger' }>`
-  padding: 6px 10px;
+  padding: ${props => props.variant === 'primary' ? '8px 14px' : '6px 10px'};
   border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: ${props => props.variant === 'primary' ? '0.80rem' : '0.8rem'};
+  font-weight: ${props => props.variant === 'primary' ? '600' : '500'};
   cursor: pointer;
   transition: all 0.2s;
   border: none;
@@ -54,12 +56,13 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'danger' }>`
   &:hover {
     background-color: ${props => {
       switch (props.variant) {
-        case 'primary': return '#3a80d2';
+        case 'primary': return '#0056b3'; // Primary 호버 색상 변경
         case 'secondary': return '#e0e0e0';
         case 'danger': return '#d73c2c';
         default: return '#e0e0e0';
       }
     }};
+    box-shadow: ${props => props.variant === 'primary' ? '0 2px 8px rgba(0, 123, 255, 0.3)' : 'none'}; // Primary 호버 시 그림자 효과 추가
   }
 `;
 
@@ -70,6 +73,29 @@ const EmptyList = styled.div`
   font-size: 0.9rem;
   border: 1px dashed #ddd;
   border-radius: 6px;
+  white-space: pre-line;
+`;
+
+const ScrollableListArea = styled.div`
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-top: 15px;
+  padding-right: 5px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+  }
 `;
 
 interface ProcessListProps {
@@ -123,20 +149,21 @@ const ProcessList: React.FC<ProcessListProps> = ({
             onClick={onClearAll}
             title="모든 프로세스 삭제"
           >
-            초기화
+            프로세스 초기화
           </Button>
           <Button 
             variant="primary" 
             onClick={onInitExample}
             title="예시 프로세스 구성으로 초기화"
           >
-            예시 초기화
+            시나리오 적용
           </Button>
         </ButtonsContainer>
       </ListHeader>
-      
-      {processes.length === 0 ? (
-        <EmptyList>프로세스가 없습니다. 프로세스를 추가해주세요.</EmptyList>
+
+      <ScrollableListArea>
+        {processes.length === 0 ? (
+        <EmptyList>{`프로세스가 없습니다.\n프로세스를 추가해주세요.`}</EmptyList>
       ) : (
         <DndContext 
           sensors={sensors}
@@ -156,9 +183,10 @@ const ProcessList: React.FC<ProcessListProps> = ({
                 onDelete={onDelete}
               />
             ))}
-          </SortableContext>
-        </DndContext>
-      )}
+            </SortableContext>
+          </DndContext>
+        )}
+      </ScrollableListArea>
     </ProcessListContainer>
   );
 };

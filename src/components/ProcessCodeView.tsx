@@ -146,7 +146,7 @@ const ProcessCodeView: React.FC<ProcessCodeViewProps> = ({
 
   return (
     <CodeViewContainer>
-      <Title>프로세스 코드 진행 상태</Title>
+      <Title>프로세스 진행 상태</Title>
       <ProcessCodeContainer>
         {processes.map(process => {
           const codeLines = process.type === 'producer' ? producerCodeLines : consumerCodeLines;
