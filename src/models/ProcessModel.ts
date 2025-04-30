@@ -30,7 +30,6 @@ export class ProcessModel {
         'V(mutexP)'
       ];
     } else {
-      // 소비자 알고리즘 수정: P(mutexP) -> P(mutexC)
       this.steps = [
         'P(mutexC)',
         'P(nrfull)',
@@ -74,15 +73,10 @@ export class ProcessModel {
     return this.steps[this.currentStep];
   }
 
-  // Add this new method
   public setNextStep(stepIndex: number): void {
     if (stepIndex >= 0 && stepIndex < this.steps.length) {
       this.currentStep = stepIndex;
-    } else {
-      console.warn(`Invalid step index: ${stepIndex} for process ${this.id}`);
-      // Optionally handle the error, e.g., reset to 0 or throw an error
-      // For now, we'll just keep the current step
-    }
+    } 
   }
 
   public getSteps(): string[] {

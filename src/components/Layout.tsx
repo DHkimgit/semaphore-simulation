@@ -45,7 +45,6 @@ const SidebarFooter = styled.div`
 
 const ProcessListContainer = styled.div`
   flex: 1;
-  overflow-y: auto; /* 프로세스 리스트만 스크롤 가능 */
   margin-bottom: 15px;
   
   /* 스크롤바 스타일 개선 */

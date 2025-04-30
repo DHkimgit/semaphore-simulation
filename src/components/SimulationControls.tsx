@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 const ControlsContainer = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   padding: 15px;
   background-color: #f9f9f9;
   border-radius: 8px;
@@ -39,6 +39,14 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'danger' }>`
   cursor: pointer;
   transition: background-color 0.2s;
   flex: 1;
+  white-space: ${props => {
+    switch (props.variant) {
+      case 'primary': return 'nowrap';
+      case'secondary': return 'nowrap';
+      case 'danger': return 'pre-line';
+      default: return 'nowrap';
+    }
+  }};
   
   &:hover {
     background-color: ${props => {
@@ -60,19 +68,15 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'danger' }>`
 interface SimulationControlsProps {
   isRunning: boolean;
   onStart: () => void;
-  onPrevious: () => void;
   onNext: () => void;
   onReset: () => void;
-  canGoPrevious: boolean;
 }
 
 const SimulationControls: React.FC<SimulationControlsProps> = ({
   isRunning,
   onStart,
-  onPrevious,
   onNext,
   onReset,
-  canGoPrevious
 }) => {
   return (
     <ControlsContainer>
@@ -85,17 +89,14 @@ const SimulationControls: React.FC<SimulationControlsProps> = ({
           </Button>
         </ButtonGroup>
       ) : (
-        <>
-          <ButtonGroup>
-            <Button variant="primary" onClick={onNext}>
-              다음 상황
-            </Button>
-          </ButtonGroup>
-          
+        <ButtonGroup>
           <Button variant="danger" onClick={onReset}>
-            시뮬레이션 초기화
+            {`시뮬레이션 \n초기화`}
           </Button>
-        </>
+          <Button variant="primary" onClick={onNext}>
+              다음 상황
+          </Button>
+        </ButtonGroup>
       )}
     </ControlsContainer>
   );

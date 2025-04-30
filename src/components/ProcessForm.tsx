@@ -132,9 +132,9 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onAddProcess, producerCount, 
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="생산할 메시지 내용"
+              placeholder="미입력시 자동 생성"
             />
-            <HelpText>메시지를 입력하지 않으면 자동으로 생성됩니다.</HelpText>
+            <HelpText></HelpText>
           </FormGroup>
         )}
         
