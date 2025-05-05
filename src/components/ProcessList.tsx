@@ -1,8 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import ProcessItem from './ProcessItem';
 import { Process } from '../models';
 
@@ -56,7 +53,7 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'danger' }>`
   &:hover {
     background-color: ${props => {
       switch (props.variant) {
-        case 'primary': return '#0056b3'; // Primary 호버 색상 변경
+        case 'primary': return '#0056b3';
         case 'secondary': return '#e0e0e0';
         case 'danger': return '#d73c2c';
         default: return '#e0e0e0';
@@ -76,7 +73,7 @@ const EmptyList = styled.div`
   white-space: pre-line;
 `;
 
-const ScrollableListArea = styled.div`
+const ListArea = styled.div`
   flex-grow: 1;
   overflow-y: auto;
   margin-top: 15px;
@@ -100,7 +97,6 @@ const ScrollableListArea = styled.div`
 
 interface ProcessListProps {
   processes: Process[];
-  onReorder: (newOrder: string[]) => void;
   onDelete: (id: string) => void;
   onClearAll: () => void;
   onInitExample: () => void;
@@ -108,37 +104,10 @@ interface ProcessListProps {
 
 const ProcessList: React.FC<ProcessListProps> = ({ 
   processes, 
-  onReorder, 
   onDelete, 
   onClearAll, 
   onInitExample 
 }) => {
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    
-    if (active.id !== over.id) {
-      const oldIndex = processes.findIndex(p => p.id === active.id);
-      const newIndex = processes.findIndex(p => p.id === over.id);
-      
-      const newProcesses = [...processes];
-      const [movedProcess] = newProcesses.splice(oldIndex, 1);
-      newProcesses.splice(newIndex, 0, movedProcess);
-      
-      onReorder(newProcesses.map(p => p.id));
-    }
-  };
-
   return (
     <ProcessListContainer>
       <ListHeader>
@@ -161,32 +130,20 @@ const ProcessList: React.FC<ProcessListProps> = ({
         </ButtonsContainer>
       </ListHeader>
 
-      <ScrollableListArea>
+      <ListArea>
         {processes.length === 0 ? (
         <EmptyList>{`프로세스가 없습니다.\n프로세스를 추가해주세요.`}</EmptyList>
       ) : (
-        <DndContext 
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-          modifiers={[restrictToVerticalAxis]}
-        >
-          <SortableContext 
-            items={processes.map(p => p.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {processes.map((process) => (
-              <ProcessItem 
-                key={process.id} 
-                id={process.id} 
-                process={process}
-                onDelete={onDelete}
-              />
-            ))}
-            </SortableContext>
-          </DndContext>
+        processes.map((process) => (
+          <ProcessItem 
+            key={process.id} 
+            id={process.id} 
+            process={process}
+            onDelete={onDelete}
+          />
+        ))    
         )}
-      </ScrollableListArea>
+      </ListArea>
     </ProcessListContainer>
   );
 };

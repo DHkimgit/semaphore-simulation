@@ -1,4 +1,4 @@
-import { Process, ProcessType, Message, ProcessStatus } from './types'; // Import ProcessStatus
+import { Process, ProcessType, Message, ProcessStatus } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ProcessModel {
@@ -6,7 +6,7 @@ export class ProcessModel {
   private type: ProcessType;
   private name: string;
   private message?: string;
-  private status: ProcessStatus; // Use ProcessStatus type
+  private status: ProcessStatus;
   private currentStep: number;
   private steps: string[];
 
@@ -57,11 +57,11 @@ export class ProcessModel {
     return this.message;
   }
 
-  public getStatus(): ProcessStatus { // Use ProcessStatus type
+  public getStatus(): ProcessStatus {
     return this.status;
   }
 
-  public setStatus(status: ProcessStatus): void { // Use ProcessStatus type
+  public setStatus(status: ProcessStatus): void {
     this.status = status;
   }
 

@@ -26,20 +26,20 @@ import { ProcessModel, SimulationModel, SimulationState } from './models';
 
 const LogButton = styled.button`
   position: absolute;
-  top: 20px; // bottom -> top 으로 변경
+  top: 20px;
   right: 20px;
   padding: 10px 15px;
-  background-color: #007bff; // 눈에 띄는 파란색으로 변경
+  background-color: #007bff;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 0.9rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  z-index: 999; // 다른 요소 위에 표시되도록
+  z-index: 999;
 
   &:hover {
-    background-color: #0056b3; // hover 색상도 변경
+    background-color: #0056b3;
   }
 `;
 
@@ -60,11 +60,6 @@ const App: React.FC = () => {
       setConsumerCount(prev => prev + 1);
     }
     
-    setSimulationState(simulationModel.getCurrentState());
-  };
-
-  const handleReorderProcesses = (orderedIds: string[]) => {
-    simulationModel.reorderProcesses(orderedIds);
     setSimulationState(simulationModel.getCurrentState());
   };
 
@@ -123,7 +118,6 @@ const App: React.FC = () => {
           <ProcessListContainer>
             <ProcessList 
               processes={simulationState.processes} 
-              onReorder={handleReorderProcesses}
               onDelete={handleDeleteProcess}
               onClearAll={handleClearAllProcesses}
               onInitExample={handleInitExample}

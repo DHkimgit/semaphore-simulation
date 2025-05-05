@@ -61,15 +61,14 @@ const ConsumerLogTable: React.FC<ConsumerLogTableProps> = ({ logs }) => {
   return (
     <LogTableContainer>
       {logs.length === 0 ? (
-        <EmptyMessage>소비자 로그가 없습니다.</EmptyMessage>
+        <EmptyMessage>소비자 프로세스가 소비한 메시지가 없습니다.</EmptyMessage>
       ) : (
         <Table>
           <TableHead>
             <TableRow>
               <TableHeader>소비자</TableHeader>
-              <TableHeader>생산자</TableHeader>
-              <TableHeader>메시지 내용</TableHeader>
-              <TableHeader>처리 시간</TableHeader>
+              <TableHeader>메시지 생산자</TableHeader>
+              <TableHeader>소비한 메시지 내용</TableHeader>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -78,9 +77,6 @@ const ConsumerLogTable: React.FC<ConsumerLogTableProps> = ({ logs }) => {
                 <TableCell>{log.consumerName}</TableCell>
                 <TableCell>{log.producerName}</TableCell>
                 <TableCell>{log.messageContent}</TableCell>
-                <TableCell>
-                  {new Date(log.timestamp).toLocaleTimeString()}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -3,7 +3,6 @@ import styled, { keyframes } from 'styled-components';
 import { Message } from '../models';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// 애니메이션 정의
 const pulseAnimation = keyframes`
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -20,8 +19,8 @@ const CircularBufferContainer = styled.div`
 
 const BufferCircleContainer = styled.div`
   position: relative;
-  width: 260px; /* 크기 증가 */
-  height: 260px; /* 크기 증가 */
+  width: 260px;
+  height: 260px;
   margin: 0 auto;
 `;
 
@@ -63,29 +62,29 @@ const BufferCell = styled.div<{ index: number }>`
     const y = radius * Math.sin(angle);
     
     return `
-      top: ${130 + y}px; /* 중앙 오프셋 증가 */
-      left: ${130 + x}px; /* 중앙 오프셋 증가 */
-      transform: translate(-50%, -50%); // 셀 중앙 정렬을 위한 transform 추가
+      top: ${130 + y}px;
+      left: ${130 + x}px;
+      transform: translate(-50%, -50%);
     `;
   }}
 `;
 
 const BufferLabel = styled.div<{ index: number }>`
   position: absolute;
-  font-size: 0.9rem; /* 글자 크기 증가 */
+  font-size: 0.9rem;
   font-weight: bold;
   color: #444;
   
   ${({ index }) => {
     const angle = (index * 90) * (Math.PI / 180);
-    const radius = 150; /* 반지름 증가 */
+    const radius = 150;
     const x = radius * Math.cos(angle);
     const y = radius * Math.sin(angle);
     
     return `
-      top: ${130 + y}px; /* 중앙 오프셋 증가 */
-      left: ${130 + x}px; /* 중앙 오프셋 증가 */
-      transform: translate(-50%, -50%); /* 중앙 정렬 추가 */
+      top: ${130 + y}px;
+      left: ${130 + x}px;
+      transform: translate(-50%, -50%);
     `;
   }}
 `;
@@ -187,70 +186,11 @@ const PointerArrow = styled.div<{ position: 'in' | 'out', index: number }>`
     const rotation = angle * (180 / Math.PI) + 90;
     
     return `
-      top: ${130 + y}px; /* 중앙 오프셋 증가 */
-      left: ${130 + x}px; /* 중앙 오프셋 증가 */
+      top: ${130 + y}px;
+      left: ${130 + x}px;
       transform: translate(-50%, -50%) rotate(${rotation}deg);
     `;
   }}
-`;
-
-// 새로 추가된 메시지 목록 컴포넌트
-const MessageListContainer = styled.div`
-  position: absolute;
-  top: 0;
-  left: -240px;
-  width: 220px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 10px;
-  max-height: 220px;
-  overflow-y: auto;
-`;
-
-const MessageListTitle = styled.h4`
-  margin: 0 0 10px 0;
-  font-size: 0.9rem;
-  color: #444;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
-`;
-
-const MessageItem = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 5px;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  background-color: #f9f9f9;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const MessageIcon = styled.div<{ type: 'producer' | 'consumer' }>`
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  background-color: ${props => props.type === 'producer' ? '#4a90e2' : '#e2574a'};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.7rem;
-  margin-right: 8px;
-`;
-
-const MessageContent = styled.div`
-  font-size: 0.8rem;
-  color: #555;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 `;
 
 interface CircularBufferViewProps {
@@ -266,7 +206,6 @@ const CircularBufferView: React.FC<CircularBufferViewProps> = ({ buffer, inIndex
   const [inChanging, setInChanging] = useState(false);
   const [outChanging, setOutChanging] = useState(false);
 
-  // in/out 변수 변화 감지 및 애니메이션 처리
   React.useEffect(() => {
     if (inIndex !== prevInIndex) {
       setInChanging(true);
@@ -283,9 +222,6 @@ const CircularBufferView: React.FC<CircularBufferViewProps> = ({ buffer, inIndex
     }
   }, [outIndex, prevOutIndex]);
 
-  // 버퍼에 있는 메시지 목록 (null이 아닌 것만 필터링)
-  const messages = buffer.filter(msg => msg !== null) as Message[];
-
   return (
     <CircularBufferContainer>
       <VariableContainer>
@@ -300,23 +236,6 @@ const CircularBufferView: React.FC<CircularBufferViewProps> = ({ buffer, inIndex
       </VariableContainer>
       
       <BufferCircleContainer>
-        {/* 메시지 목록 컴포넌트 (좌측 상단에 배치)
-        <MessageListContainer>
-          <MessageListTitle>버퍼 메시지 목록</MessageListTitle>
-          {messages.length > 0 ? (
-            messages.map((message, idx) => (
-              <MessageItem key={idx}>
-                <MessageIcon type="producer">{message.producerName}</MessageIcon>
-                <MessageContent>{message.content}</MessageContent>
-              </MessageItem>
-            ))
-          ) : (
-            <MessageItem>
-              <MessageContent>버퍼가 비어 있습니다.</MessageContent>
-            </MessageItem>
-          )}
-        </MessageListContainer> */}
-        
         <BufferCircle>
           <InnerCircle />
           

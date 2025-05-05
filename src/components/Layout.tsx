@@ -30,16 +30,16 @@ const Sidebar = styled.div`
   padding: 15px;
   display: flex;
   flex-direction: column;
-  overflow-y: hidden; /* 전체 사이드바는 스크롤 없음 */
+  overflow-y: hidden;
   height: 100vh;
 `;
 
 const SidebarHeader = styled.div`
-  flex-shrink: 0; /* 헤더 영역은 크기 고정 */
+  flex-shrink: 0;
 `;
 
 const SidebarFooter = styled.div`
-  flex-shrink: 0; /* 푸터 영역은 크기 고정 */
+  flex-shrink: 0;
   margin-top: 10px;
 `;
 

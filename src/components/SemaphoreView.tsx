@@ -3,7 +3,6 @@ import styled, { keyframes } from 'styled-components';
 import { Process } from '../models';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// 애니메이션 정의
 const pulseAnimation = keyframes`
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -60,12 +59,12 @@ const QueueContainer = styled.div<{ position: 'left' | 'right' }>`
   align-items: center;
   min-height: 40px;
   width: 100%;
-  max-width: 240px; /* 최대 너비 추가 */
+  max-width: 240px;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   padding: 3px;
   background-color: #fdfdfd;
-  overflow: hidden; /* 중요: 내부 콘텐츠가 넘칠 경우 숨김 처리 */
+  overflow: hidden;
 `;
 
 const QueueLabel = styled.div`
@@ -73,19 +72,18 @@ const QueueLabel = styled.div`
   color: #777;
   margin: 0 5px;
   white-space: nowrap;
-  flex-shrink: 0; /* 라벨이 줄어들지 않도록 설정 */
+  flex-shrink: 0;
 `;
 
 const QueueItems = styled.div<{ position: 'left' | 'right' }>`
   display: flex;
   flex-direction: ${props => props.position === 'left' ? 'row-reverse' : 'row'};
   flex-wrap: nowrap;
-  overflow-x: auto; /* 가로 스크롤 활성화 */
+  overflow-x: auto;
   padding: 3px;
   min-height: 35px;
   width: 100%;
   
-  /* 스크롤바 스타일링 */
   &::-webkit-scrollbar {
     height: 5px;
   }
@@ -97,7 +95,6 @@ const QueueItems = styled.div<{ position: 'left' | 'right' }>`
     background-color: #f1f1f1;
   }
   
-  /* Firefox 스크롤바 */
   scrollbar-width: thin;
   scrollbar-color: #ccc #f1f1f1;
 `;
@@ -106,7 +103,7 @@ const QueueItem = styled(motion.div)<{ type: 'producer' | 'consumer'; status: st
   min-width: 35px;
   height: 30px;
   margin: 0 2px;
-  flex-shrink: 0; /* 아이템이 줄어들지 않도록 설정 */
+  flex-shrink: 0;
   background-color: ${props => {
     if (props.status === 'blocked') {
       return props.type === 'producer' ? '#7fb5f1' : '#f18e86';

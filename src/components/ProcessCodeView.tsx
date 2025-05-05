@@ -17,16 +17,16 @@ const Title = styled.h3`
 
 const ProcessCodeContainer = styled.div`
   display: flex;
-  flex-wrap: nowrap; /* 변경: 줄 바꿈 방지 */
+  flex-wrap: nowrap;
   gap: 15px;
-  overflow-x: auto; /* 추가: 가로 스크롤 활성화 */
-  padding-bottom: 10px; /* 스크롤바 공간 확보 */
-  /* justify-content: center; 제거 또는 flex-start로 변경하여 왼쪽 정렬 */
+  overflow-x: auto;
+  padding-bottom: 10px;
+  /* justify-content: center;
 `;
 
 const ProcessCodeCard = styled.div<{ type: 'producer' | 'consumer' }>`
   width: 220px;
-  flex-shrink: 0; /* 추가: 카드가 수축되지 않도록 설정 */
+  flex-shrink: 0;
   padding: 10px;
   border-radius: 8px;
   background-color: white;
@@ -57,7 +57,7 @@ const StatusBadge = styled.span<{ status: 'waiting' | 'running' | 'blocked' | 'f
     switch (props.status) {
       case 'running': return 'rgba(40, 167, 69, 0.1)';
       case 'blocked': return 'rgba(220, 53, 69, 0.1)';
-      case 'finished': return 'rgba(108, 117, 125, 0.1)'; // 종료됨 상태 배경색 추가
+      case 'finished': return 'rgba(108, 117, 125, 0.1)';
       default: return 'rgba(108, 117, 125, 0.1)';
     }
   }};
@@ -65,7 +65,7 @@ const StatusBadge = styled.span<{ status: 'waiting' | 'running' | 'blocked' | 'f
     switch (props.status) {
       case 'running': return '#28a745';
       case 'blocked': return '#dc3545';
-      case 'finished': return '#6c757d'; // 종료됨 상태 글자색 추가
+      case 'finished': return '#6c757d';
       default: return '#6c757d';
     }
   }};
@@ -122,7 +122,7 @@ const ProcessCodeView: React.FC<ProcessCodeViewProps> = ({
     return null;
   };
 
-  // 생산자 코드 라인 (steps 배열과 정확히 일치하도록 수정)
+  // 생산자 코드 라인
   const producerCodeLines = [
     'create a new message M',
     'P(mutexP);',
@@ -133,8 +133,7 @@ const ProcessCodeView: React.FC<ProcessCodeViewProps> = ({
     'V(mutexP);'
   ];
 
-  // 소비자 코드 라인 (steps 배열과 정확히 일치하도록 수정)
-  // 첫 번째 세마포어 연산을 P(mutexP)에서 P(mutexC)로 변경
+  // 소비자 코드 라인
   const consumerCodeLines = [
     'P(mutexC);',
     'P(nrfull);',
@@ -162,16 +161,14 @@ const ProcessCodeView: React.FC<ProcessCodeViewProps> = ({
                     : process.status === 'running' 
                       ? '실행 중' 
                       : process.status === 'finished'
-                        ? '종료됨' // 종료됨 텍스트 추가
+                        ? '종료됨'
                         : '대기 중'}
                 </StatusBadge>
               </ProcessHeader>
               
               {codeLines.map((line, index) => {
-                // 현재 실행 중인 라인인지 확인
                 const isActive = process.status === 'running' && process.currentStep === index;
                 
-                // 블록된 라인인지 확인 (P 연산에서 블록된 경우)
                 const isBlocked = process.status === 'blocked' && 
                                  ((line.includes('P(mutexP)') && blockedSemaphore === 'mutexP') ||
                                   (line.includes('P(mutexC)') && blockedSemaphore === 'mutexC') ||
